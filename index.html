@@ -85,14 +85,65 @@
 
   a, button { -webkit-tap-highlight-color: transparent; }
 
+  /* Print-only side-by-side fallback for before/after sliders */
+  .ba-print-pair { display: none; }
+
+  /* Checkerboard (xadrez) image/text layout used in trechos & camadas — only swap order on desktop */
+  @media (min-width: 1024px) {
+    .chess-row:nth-child(even) .chess-media { order: 2; }
+    .chess-row:nth-child(even) .chess-text { order: 1; }
+  }
+
+  /* Larger touch target for the before/after handle on mobile */
+  @media (max-width: 640px) {
+    .ba-handle-grip { width: 44px; height: 44px; }
+  }
+
   @media print {
-    section, .ba-slider-wrap, .ba-slider, img, .card-shadow,
-    h1, h2, h3, p, .grid > div, .reveal {
+    .ba-slider-wrap, .ba-slider, img, .card-shadow,
+    h1, h2, h3, .grid > div, .chess-row, .reveal {
       break-inside: avoid;
       page-break-inside: avoid;
     }
-    section { break-before: page; }
-    section:first-of-type { break-before: avoid; }
+
+    /* Let content flow naturally between pages instead of forcing one section per page — avoids large empty gaps */
+    section { break-before: auto; padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+    section#contato { padding-bottom: 0.5rem !important; }
+    footer { break-before: avoid; padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; margin-top: 0 !important; }
+
+    /* Hero: shrink so heading, copy and image fit together on the first page instead of spilling the image to page 2 */
+    section#top { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+    section#top .grid { gap: 1.5rem !important; }
+    section#top img { max-height: 60vh; object-fit: cover; }
+
+    /* Every yellow eyebrow label marks the start of a new section — always begin a fresh page there */
+    .print-section-break { break-before: page; }
+
+    /* Sliders can't be dragged on paper — show both states side by side instead */
+    .ba-slider-wrap, .ba-slider { display: none !important; }
+    .ba-print-pair { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .ba-print-pair img { width: 100%; display: block; border-radius: 0.5rem; object-fit: contain; }
+    .ba-print-pair span { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.25rem; }
+
+    /* Keep each trecho's image pair + heading + caption together as one block so the title/subtitle never lands on the next page */
+    .trecho-card { break-inside: avoid; page-break-inside: avoid; }
+    .trecho-card .ba-print-pair img { max-height: 32vh; }
+
+    .chess-row, .chess-row:nth-child(even) { display: grid !important; grid-template-columns: 1fr 1fr !important; }
+    .chess-row:nth-child(even) .chess-media { order: initial !important; }
+    .chess-row:nth-child(even) .chess-text { order: initial !important; }
+
+    /* Shrink the "tipos de linha" sample so it shares a page with the full camadas table below it */
+    .tipos-linha-img { max-width: 70%; margin: 0 auto; }
+    .camadas-tabela-img { margin-top: 0.75rem !important; }
+
+    /* Shrink the 233-layers screenshot so it stays on the same page as the "Camadas no padrão ABNT" heading and category grid */
+    .layers-screenshot-img { max-width: 55%; margin: 0 auto !important; }
+    .layers-screenshot-img img { max-height: 30vh; object-fit: contain; }
+
+    /* Shrink so it stays on the same page as the "Portfólio" heading and 78km card instead of spilling alone onto the next page */
+    .todos-trechos-img { max-width: 38%; margin: 0.5rem auto !important; }
+    .todos-trechos-img img { max-height: 28vh; object-fit: contain; }
   }
 </style>
 </head>
@@ -140,7 +191,7 @@
         </div>
         <div class="reveal relative">
           <div class="rounded-2xl overflow-hidden card-shadow border border-white/5 relative">
-            <img src="assets/portfolio/hero-ortomosaico-01.jpg" alt="Vetorização de ortomosaico — wireframe CAD ao lado da imagem aérea original" class="w-full">
+            <img src="assets/portfolio/hero-novo-photo.jpg" alt="Imagem aérea de cruzamento de rodovias antes da vetorização" class="w-full">
             <div class="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-transparent to-transparent mix-blend-multiply"></div>
           </div>
         </div>
@@ -149,7 +200,7 @@
   </section>
 
   <!-- SOBRE -->
-  <section id="sobre" class="py-24 px-6 border-t border-white/5">
+  <section id="sobre" class="print-section-break py-24 px-6 border-t border-white/5">
     <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16">
       <div class="reveal">
         <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em] mb-6">Sobre</h2>
@@ -174,7 +225,7 @@
   <!-- SERVIÇOS -->
   <section id="servicos" class="py-24 px-6 border-t border-white/5 bg-ink-900/40">
     <div class="max-w-6xl mx-auto">
-      <div class="reveal mb-12 max-w-xl">
+      <div class="reveal print-section-break mb-12 max-w-xl">
         <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">O que eu faço</p>
         <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em]">Serviços</h2>
       </div>
@@ -222,7 +273,7 @@
   <!-- PORTFÓLIO -->
   <section id="portfolio" class="py-24 px-6 border-t border-white/5">
     <div class="max-w-6xl mx-auto">
-      <div class="reveal mb-10 max-w-xl">
+      <div class="reveal print-section-break mb-10 max-w-xl">
         <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Antes &amp; depois</p>
         <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em] mb-4">Portfólio</h2>
         <p class="text-slate-400 leading-[1.7]">Arraste o slider para comparar a imagem aérea original com a vetorização técnica em AutoCAD Civil 3D.</p>
@@ -237,98 +288,102 @@
         </p>
       </div>
 
-      <div class="grid lg:grid-cols-2 gap-8">
-        <div class="reveal">
-          <div class="ba-slider" data-before="assets/portfolio/cercas-divisas-original.jpg" data-after="assets/portfolio/cercas-divisas-vetorizado.jpg" data-before-label="Original" data-after-label="Vetorizado"></div>
-          <p class="mt-4 text-sm text-slate-300">Vetorização de cercas e divisas — polilinhas detalhando cercas, muros e edificações.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/delimitacao-vias-01.jpg" alt="Delimitação de vias e acessos — comparação entre imagem aérea e vetorização CAD" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Delimitação de vias e acessos — projeto de nova rodovia na região de Sergipe.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/elementos-urbanos-01.jpg" alt="Extração de elementos urbanos — comparação entre imagem aérea e vetorização CAD" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Extração de elementos urbanos — quadras, vias e edificações detalhadas.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/elementos-rurais-02.jpg" alt="Extração de elementos rurais — comparação entre imagem aérea e vetorização CAD" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Extração de elementos rurais — glebas, acessos e construções rurais.</p>
-        </div>
+      <div class="reveal todos-trechos-img mb-14 max-w-2xl mx-auto rounded-xl overflow-hidden border border-white/5 card-shadow">
+        <img src="assets/portfolio/todos-trechos-lado-a-lado.jpg" alt="Todos os percursos vetorizados lado a lado, mostrando a extensão completa de cada trecho do início ao fim" class="w-full bg-white">
+        <div class="bg-ink-800 px-5 py-3 text-sm text-slate-300">Todos os percursos lado a lado — visão geral de cada trecho vetorizado, do início ao fim do levantamento.</div>
       </div>
 
       <!-- TRECHOS RODOVIÁRIOS -->
-      <div class="reveal mt-20 mb-10 max-w-xl">
+      <div class="reveal print-section-break mt-20 mb-10 max-w-xl">
         <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Trechos entregues</p>
         <h3 class="font-display text-2xl sm:text-3xl font-semibold text-white tracking-[-0.02em] mb-4">Vetorização de trechos rodoviários</h3>
-        <p class="text-slate-400 leading-[1.7]">Amostras reais de diferentes trechos vetorizados, cobrindo desde faixa de domínio até edificações, postes, cercas e infraestrutura urbana ao longo da via.</p>
+        <p class="text-slate-400 leading-[1.7]">Amostras reais de diferentes trechos vetorizados. Arraste o slider para comparar a vetorização com e sem a ortofoto de fundo.</p>
       </div>
 
-      <div class="grid lg:grid-cols-2 gap-8">
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/trecho1-galpao-industrial.jpg" alt="Vetorização de galpões e edificações próximos à rodovia" class="w-full">
+      <div class="space-y-14">
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/trecho1-galpao-comorto.jpg" data-after="assets/portfolio/trecho1-galpao-semorto.jpg" data-before-label="Com ortofoto" data-after-label="Sem ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Com ortofoto</span><img src="assets/portfolio/trecho1-galpao-comorto.jpg" alt=""></div>
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/trecho1-galpao-semorto.jpg" alt=""></div>
           </div>
-          <p class="mt-4 text-sm text-slate-300">Galpões e edificações próximos à rodovia — contornos detalhados em polilinhas por módulo construtivo.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/trecho1-rodovia-residencial.jpg" alt="Vetorização de rodovia em trecho residencial" class="w-full">
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">Galpões próximos à rodovia</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">Galpões e edificações próximos à rodovia — contornos detalhados em polilinhas por módulo construtivo, com e sem a imagem aérea de fundo.</p>
           </div>
-          <p class="mt-4 text-sm text-slate-300">Eixo de rodovia e edificações residenciais — bordo de via e elementos adjacentes mapeados.</p>
         </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/trecho2-faixa-dominio-curva.jpg" alt="Vetorização respeitando faixa de domínio de 30 metros da BR" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Faixa de domínio de 30 m da BR — eixo da via, postes e elementos de apoio georreferenciados.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/trecho2-galpao-rural.jpg" alt="Vetorização de galpão e acesso rural junto à faixa de domínio" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Acesso rural e galpão dentro da faixa de domínio — detalhamento de contornos e divisas.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/trecho3-industrias-comercio.jpg" alt="Vetorização de estrada próxima a indústrias e comércios" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Estrada próxima a indústrias e comércios — galpões, acessos e cobertura comercial detalhados.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/trecho6-edificacoes-urbanas.jpg" alt="Vetorização de BR no meio de área urbana com edificações em faixa de 100 metros" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">BR em perímetro urbano — todas as edificações vetorizadas em faixa de 100 m para cada lado da via.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/treco4-acesso-edificacoes.jpg" alt="Vetorização de acesso de rodovia com edificações e rede de energia" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Acesso de rodovia — edificações, postes e rede de energia detalhados ao longo da via.</p>
-        </div>
-        <div class="reveal">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
-            <img src="assets/portfolio/treco5-cruzamento-postes.jpg" alt="Vetorização de cruzamento com muros, edificações, postes e cercas" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300">Cruzamento de vias — muros, edificações, postes, cercas, acostamento e bordo da BR mapeados.</p>
-        </div>
-        <div class="reveal lg:col-span-2">
-          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow max-w-2xl mx-auto">
-            <img src="assets/portfolio/treco7-divisas-rurais.jpg" alt="Vetorização de rodovia com postes, edificações, bueiros e quadras" class="w-full">
-          </div>
-          <p class="mt-4 text-sm text-slate-300 text-center">Levantamento ao longo da rodovia — linhas de postes, edificações, bueiros, quadras e acessos.</p>
-        </div>
-      </div>
 
-      <div class="reveal mt-10 rounded-xl overflow-hidden border border-white/5 card-shadow">
-        <img src="assets/portfolio/total-area-vetorizada.jpg" alt="Visão geral de um trecho completo de rodovia vetorizado, do início ao fim" class="w-full max-h-[640px] object-contain bg-ink-900">
-        <div class="bg-ink-800 px-5 py-3 text-sm text-slate-300">Visão geral de um trecho completo — vetorização do início ao fim do percurso, com tabela de camadas aplicada.</div>
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/trecho1-residencial-comorto.jpg" data-after="assets/portfolio/trecho1-residencial-semorto.jpg" data-before-label="Com ortofoto" data-after-label="Sem ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Com ortofoto</span><img src="assets/portfolio/trecho1-residencial-comorto.jpg" alt=""></div>
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/trecho1-residencial-semorto.jpg" alt=""></div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">Rodovia em trecho residencial</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">Eixo de rodovia e edificações residenciais — bordo de via e elementos adjacentes mapeados.</p>
+          </div>
+        </div>
+
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/trecho2-curva-comorto.jpg" data-after="assets/portfolio/trecho2-curva-semorto.jpg" data-before-label="Com ortofoto" data-after-label="Sem ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Com ortofoto</span><img src="assets/portfolio/trecho2-curva-comorto.jpg" alt=""></div>
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/trecho2-curva-semorto.jpg" alt=""></div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">Faixa de domínio de 30 m</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">Faixa de domínio de 30 m da BR — eixo da via, postes e elementos de apoio georreferenciados.</p>
+          </div>
+        </div>
+
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/trecho3-comercio-comorto.jpg" data-after="assets/portfolio/trecho3-comercio-semorto.jpg" data-before-label="Com ortofoto" data-after-label="Sem ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Com ortofoto</span><img src="assets/portfolio/trecho3-comercio-comorto.jpg" alt=""></div>
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/trecho3-comercio-semorto.jpg" alt=""></div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">Indústrias e comércios</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">Estrada próxima a indústrias e comércios — galpões, acessos e cobertura comercial detalhados.</p>
+          </div>
+        </div>
+
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/trecho6-urbano-comorto.jpg" data-after="assets/portfolio/trecho6-urbano-semorto.jpg" data-before-label="Com ortofoto" data-after-label="Sem ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Com ortofoto</span><img src="assets/portfolio/trecho6-urbano-comorto.jpg" alt=""></div>
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/trecho6-urbano-semorto.jpg" alt=""></div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">BR em perímetro urbano</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">BR no meio de área urbana — todas as edificações vetorizadas em faixa de 100 m para cada lado da via.</p>
+          </div>
+        </div>
+
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/treco4-acesso-comorto.jpg" data-after="assets/portfolio/treco4-acesso-semorto.jpg" data-before-label="Sem ortofoto" data-after-label="Com ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/treco4-acesso-comorto.jpg" alt=""></div>
+            <div><span>Com ortofoto</span><img src="assets/portfolio/treco4-acesso-semorto.jpg" alt=""></div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">Acesso de rodovia e rede de energia</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">Acesso de rodovia — edificações, postes e rede de energia detalhados ao longo da via.</p>
+          </div>
+        </div>
+
+        <div class="reveal trecho-card">
+          <div class="ba-slider" data-before="assets/portfolio/treco7-divisas-comorto.jpg" data-after="assets/portfolio/treco7-divisas-semorto.jpg" data-before-label="Com ortofoto" data-after-label="Sem ortofoto"></div>
+          <div class="ba-print-pair mt-2">
+            <div><span>Com ortofoto</span><img src="assets/portfolio/treco7-divisas-comorto.jpg" alt=""></div>
+            <div><span>Sem ortofoto</span><img src="assets/portfolio/treco7-divisas-semorto.jpg" alt=""></div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-display text-white font-semibold text-lg mb-2">Postes, bueiros e divisas rurais</h4>
+            <p class="text-slate-300 text-sm leading-[1.7]">Levantamento ao longo da rodovia — linhas de postes, edificações, bueiros, quadras e acessos.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -336,7 +391,7 @@
   <!-- PADRONIZAÇÃO DE CAMADAS -->
   <section class="py-24 px-6 border-t border-white/5 bg-ink-900/40">
     <div class="max-w-6xl mx-auto">
-      <div class="reveal mb-12 max-w-2xl">
+      <div class="reveal print-section-break mb-12 max-w-2xl">
         <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Padronização técnica</p>
         <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em] mb-4">Camadas no padrão ABNT</h2>
         <p class="text-slate-400 leading-[1.7]">Todas as vetorizações seguem uma estrutura de camadas (layers) padronizada conforme as normas técnicas da ABNT para representação topográfica, garantindo que qualquer equipe de engenharia consiga abrir o arquivo e reconhecer imediatamente cada elemento.</p>
@@ -377,9 +432,27 @@
         </div>
       </div>
 
-      <div class="reveal rounded-xl overflow-hidden border border-white/5 card-shadow max-w-3xl">
+      <div class="reveal layers-screenshot-img rounded-xl overflow-hidden border border-white/5 card-shadow max-w-3xl">
         <img src="assets/portfolio/layers-screenshot.jpg" alt="Tabela de layers organizadas por classe do projeto, seguindo nomenclatura técnica padronizada" class="w-full">
         <div class="bg-ink-800 px-5 py-3 text-sm text-slate-300">233 camadas organizadas por categoria técnica — nomenclatura padronizada por classe (ex: TC-SV_BORDO, TC-EU_POSTE), facilitando a leitura por qualquer equipe.</div>
+      </div>
+
+      <div class="chess-row reveal grid lg:grid-cols-2 gap-8 items-center mt-16">
+        <div class="chess-media">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow tipos-linha-img">
+            <img src="assets/portfolio/tipos-de-linha.jpg" alt="Exemplo de tipos de linha aplicados sobre um trecho vetorizado — eixo de via, cercas, postes e edificações" class="w-full">
+          </div>
+        </div>
+        <div class="chess-text">
+          <h3 class="font-display text-xl font-semibold text-white tracking-[-0.01em] mb-3">Cada elemento com seu próprio tipo de linha</h3>
+          <p class="text-slate-300 text-sm leading-[1.7] mb-3">Eixo e bordo de via em linha contínua, cercas e divisas em traço específico, postes e marcos como blocos de ponto — cada categoria técnica tem cor, espessura e estilo próprios, seguindo o mesmo padrão em todos os projetos.</p>
+          <p class="text-slate-400 text-sm leading-[1.7]">Isso garante que qualquer equipe consiga identificar visualmente o que é via, cerca, edificação ou rede de energia só de olhar para o desenho, sem precisar abrir a tabela de camadas.</p>
+        </div>
+      </div>
+
+      <div class="reveal mt-16 rounded-xl overflow-hidden border border-white/5 card-shadow camadas-tabela-img">
+        <img src="assets/portfolio/camadas-descricao-tabela.jpg" alt="Tabela completa de camadas e descrição — todas as categorias da topografia convencional com seus respectivos tipos de linha e símbolos" class="w-full">
+        <div class="bg-ink-800 px-5 py-3 text-sm text-slate-300">Tabela completa de camadas e descrição — todas as categorias da classe Topografia Convencional (TC), com o tipo de linha e símbolo de cada uma.</div>
       </div>
     </div>
   </section>
@@ -387,7 +460,7 @@
   <!-- DIFERENCIAIS -->
   <section class="py-24 px-6 border-t border-white/5 bg-ink-900/40">
     <div class="max-w-6xl mx-auto">
-      <div class="reveal mb-12 max-w-xl">
+      <div class="reveal print-section-break mb-12 max-w-xl">
         <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Por que trabalhar comigo</p>
         <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em]">Diferenciais</h2>
       </div>
@@ -423,7 +496,7 @@
   <!-- PROCESSO -->
   <section id="processo" class="py-24 px-6 border-t border-white/5">
     <div class="max-w-4xl mx-auto">
-      <div class="reveal mb-16 max-w-xl">
+      <div class="reveal print-section-break mb-16 max-w-xl">
         <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Como funciona</p>
         <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em]">Processo de entrega</h2>
       </div>
