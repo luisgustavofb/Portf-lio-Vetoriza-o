@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leonan Moura — Vetorização de Ortomosaicos em AutoCAD Civil 3D</title>
+<meta name="description" content="Vetorização técnica de ortomosaicos em AutoCAD Civil 3D para projetos rodoviários, topografia e infraestrutura. Atendimento remoto, agilidade e padronização técnica.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: { 950: '#0a0e14', 900: '#0f1620', 800: '#161f2c', 700: '#202b3a', 600: '#2c3a4d' },
+          steel: { 400: '#7fa8c9', 500: '#5688ad', 600: '#3d6b8c', 700: '#2f5470' },
+          amber: { 400: '#e8b563', 500: '#d99a3a', 600: '#b87d28' },
+        },
+        fontFamily: {
+          display: ['"Space Grotesk"', 'sans-serif'],
+          sans: ['Inter', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: #0a0e14; }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+
+  .grain {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .glow-radial {
+    background: radial-gradient(circle at 20% 20%, rgba(86,136,173,0.18), transparent 50%),
+                radial-gradient(circle at 80% 0%, rgba(217,154,58,0.10), transparent 45%),
+                radial-gradient(circle at 50% 100%, rgba(86,136,173,0.10), transparent 50%);
+  }
+
+  .card-shadow {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -8px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .card-shadow-hover:hover {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 40px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(86,136,173,0.25);
+  }
+
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+  .btn-primary { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -8px rgba(217,154,58,0.45); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:focus-visible { outline: 2px solid #e8b563; outline-offset: 3px; }
+
+  .nav-link { position: relative; }
+  .nav-link::after { content: ''; position: absolute; left: 0; bottom: -4px; width: 0; height: 1px; background: #d99a3a; transition: width 0.3s ease; }
+  .nav-link:hover::after { width: 100%; }
+  .nav-link:focus-visible { outline: 2px solid #e8b563; outline-offset: 4px; }
+
+  .ba-slider-wrap { position: relative; overflow: hidden; border-radius: 0.75rem; cursor: ew-resize; user-select: none; }
+  .ba-slider-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .ba-after { position: absolute; top: 0; right: 0; bottom: 0; overflow: hidden; }
+  .ba-handle {
+    position: absolute; top: 0; bottom: 0; width: 2px; background: #e8b563;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 0 16px rgba(232,181,99,0.6);
+    transform: translateX(-1px);
+  }
+  .ba-handle-grip {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 36px; height: 36px; border-radius: 9999px; background: #e8b563;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 4px rgba(10,14,20,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ba-label {
+    position: absolute; padding: 4px 10px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; background: rgba(10,14,20,0.75); color: #fff; border-radius: 4px; backdrop-filter: blur(4px);
+  }
+
+  .step-line { background: linear-gradient(180deg, transparent, #2c3a4d 10%, #2c3a4d 90%, transparent); }
+
+  a, button { -webkit-tap-highlight-color: transparent; }
+
+  @media print {
+    section, .ba-slider-wrap, .ba-slider, img, .card-shadow,
+    h1, h2, h3, p, .grid > div, .reveal {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    section { break-before: page; }
+    section:first-of-type { break-before: avoid; }
+  }
+</style>
+</head>
+<body class="bg-ink-950 text-slate-200 antialiased">
+
+  <!-- NAV -->
+  <header class="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-ink-950/70 border-b border-white/5">
+    <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#top" class="font-display font-semibold text-white text-lg tracking-tight">Leonan<span class="text-amber-500">.</span>Moura</a>
+      <div class="hidden md:flex items-center gap-8 text-sm text-slate-300">
+        <a href="#sobre" class="nav-link">Sobre</a>
+        <a href="#servicos" class="nav-link">Serviços</a>
+        <a href="#portfolio" class="nav-link">Portfólio</a>
+        <a href="#processo" class="nav-link">Processo</a>
+        <a href="#contato" class="nav-link">Contato</a>
+      </div>
+      <a href="https://wa.me/55991226944" target="_blank" rel="noopener" class="btn-primary hidden sm:inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-ink-950 font-semibold text-sm px-4 py-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-2">
+        Falar no WhatsApp
+      </a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section id="top" class="relative pt-32 pb-24 px-6 overflow-hidden">
+    <div class="absolute inset-0 glow-radial"></div>
+    <div class="grain"></div>
+    <div class="max-w-6xl mx-auto relative">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="reveal">
+          <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-4">Vetorização técnica · AutoCAD Civil 3D</p>
+          <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-white leading-[1.05] tracking-[-0.03em] mb-6">
+            Ortomosaicos vetorizados com precisão de engenharia.
+          </h1>
+          <p class="text-slate-400 text-lg leading-[1.7] mb-8 max-w-lg">
+            Projetos rodoviários, topografia e infraestrutura. Atendimento 100% remoto, com organização e padronização técnica para empresas e profissionais do setor.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <a href="https://wa.me/55991226944" target="_blank" rel="noopener" class="btn-primary inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-ink-950 font-semibold px-6 py-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-2">
+              Solicitar orçamento
+            </a>
+            <a href="#portfolio" class="btn-primary inline-flex items-center gap-2 bg-ink-800 hover:bg-ink-700 text-white font-medium px-6 py-3 rounded-lg border border-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-steel-400 focus-visible:outline-offset-2">
+              Ver portfólio
+            </a>
+          </div>
+        </div>
+        <div class="reveal relative">
+          <div class="rounded-2xl overflow-hidden card-shadow border border-white/5 relative">
+            <img src="assets/portfolio/hero-ortomosaico-01.jpg" alt="Vetorização de ortomosaico — wireframe CAD ao lado da imagem aérea original" class="w-full">
+            <div class="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-transparent to-transparent mix-blend-multiply"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOBRE -->
+  <section id="sobre" class="py-24 px-6 border-t border-white/5">
+    <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16">
+      <div class="reveal">
+        <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em] mb-6">Sobre</h2>
+        <p class="text-slate-400 leading-[1.7] mb-4">
+          Atuo com vetorização de ortomosaicos no AutoCAD Civil 3D, desenvolvendo serviços voltados para projetos rodoviários, topografia e infraestrutura.
+        </p>
+        <p class="text-slate-400 leading-[1.7]">
+          Trabalho de forma remota, prestando apoio CAD para empresas e profissionais do setor, priorizando organização, padronização técnica e agilidade nas entregas.
+        </p>
+      </div>
+      <div class="reveal">
+        <h3 class="font-display text-xl font-semibold text-white tracking-[-0.01em] mb-6">Formação e experiência</h3>
+        <div class="space-y-4 text-slate-400 leading-[1.7]">
+          <p>Técnico em Agrimensura, com experiência em atividades de campo e apoio técnico.</p>
+          <p>A atuação prática na área contribui para maior compreensão técnica na interpretação de ortomosaicos, organização de elementos topográficos e desenvolvimento das vetorizações em AutoCAD Civil 3D.</p>
+          <p>Experiência em serviços desenvolvidos para empresas do setor de topografia e engenharia, incluindo trabalhos realizados para a <span class="text-steel-400 font-medium">Voetopo</span>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVIÇOS -->
+  <section id="servicos" class="py-24 px-6 border-t border-white/5 bg-ink-900/40">
+    <div class="max-w-6xl mx-auto">
+      <div class="reveal mb-12 max-w-xl">
+        <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">O que eu faço</p>
+        <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em]">Serviços</h2>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- card template -->
+        <div class="reveal group bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow card-shadow-hover transition-shadow">
+          <div class="w-11 h-11 rounded-lg bg-steel-700/30 border border-steel-600/30 flex items-center justify-center mb-5 text-steel-400">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17l6-6 4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 class="font-display font-semibold text-white text-lg mb-2">Vetorização de ortomosaicos</h3>
+          <p class="text-slate-400 text-sm leading-[1.7]">Transformação de imagens aéreas em desenhos vetoriais precisos no AutoCAD Civil 3D.</p>
+        </div>
+        <div class="reveal group bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow card-shadow-hover transition-shadow">
+          <div class="w-11 h-11 rounded-lg bg-steel-700/30 border border-steel-600/30 flex items-center justify-center mb-5 text-steel-400">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20 L20 4 M4 4h6 M4 4v6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 class="font-display font-semibold text-white text-lg mb-2">Delimitação de vias e acessos</h3>
+          <p class="text-slate-400 text-sm leading-[1.7]">Detalhamento de bordos de acesso, rodovias e estradas de chão.</p>
+        </div>
+        <div class="reveal group bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow card-shadow-hover transition-shadow">
+          <div class="w-11 h-11 rounded-lg bg-steel-700/30 border border-steel-600/30 flex items-center justify-center mb-5 text-steel-400">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 9h16M9 4v16" /></svg>
+          </div>
+          <h3 class="font-display font-semibold text-white text-lg mb-2">Vetorização de cercas e divisas</h3>
+          <p class="text-slate-400 text-sm leading-[1.7]">Detalhamento em polilinhas de cercas, muros e edificações.</p>
+        </div>
+        <div class="reveal group bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow card-shadow-hover transition-shadow">
+          <div class="w-11 h-11 rounded-lg bg-steel-700/30 border border-steel-600/30 flex items-center justify-center mb-5 text-steel-400">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16" stroke-linecap="round"/></svg>
+          </div>
+          <h3 class="font-display font-semibold text-white text-lg mb-2">Extração de elementos urbanos e rurais</h3>
+          <p class="text-slate-400 text-sm leading-[1.7]">Identificação e estruturação de elementos do ambiente urbano e rural.</p>
+        </div>
+        <div class="reveal group bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow card-shadow-hover transition-shadow">
+          <div class="w-11 h-11 rounded-lg bg-steel-700/30 border border-steel-600/30 flex items-center justify-center mb-5 text-steel-400">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+          </div>
+          <h3 class="font-display font-semibold text-white text-lg mb-2">Estruturação de layers</h3>
+          <p class="text-slate-400 text-sm leading-[1.7]">Classificação das informações por camadas para visualização clara e trabalhos futuros.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTFÓLIO -->
+  <section id="portfolio" class="py-24 px-6 border-t border-white/5">
+    <div class="max-w-6xl mx-auto">
+      <div class="reveal mb-10 max-w-xl">
+        <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Antes &amp; depois</p>
+        <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em] mb-4">Portfólio</h2>
+        <p class="text-slate-400 leading-[1.7]">Arraste o slider para comparar a imagem aérea original com a vetorização técnica em AutoCAD Civil 3D.</p>
+      </div>
+
+      <div class="reveal mb-14 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-ink-800 to-ink-900 p-8 sm:p-10 card-shadow">
+        <p class="font-display text-2xl sm:text-3xl font-semibold text-white tracking-[-0.02em] leading-snug">
+          Mais de <span class="text-amber-500">78 km</span> de rodovias já vetorizadas e entregues.
+        </p>
+        <p class="text-slate-400 mt-3 leading-[1.7] max-w-2xl">
+          Experiência acumulada em trechos rodoviários de diferentes contextos — áreas urbanas, rurais, industriais e faixas de domínio — sempre com a mesma padronização técnica.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        <div class="reveal">
+          <div class="ba-slider" data-before="assets/portfolio/cercas-divisas-original.jpg" data-after="assets/portfolio/cercas-divisas-vetorizado.jpg" data-before-label="Original" data-after-label="Vetorizado"></div>
+          <p class="mt-4 text-sm text-slate-300">Vetorização de cercas e divisas — polilinhas detalhando cercas, muros e edificações.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/delimitacao-vias-01.jpg" alt="Delimitação de vias e acessos — comparação entre imagem aérea e vetorização CAD" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Delimitação de vias e acessos — projeto de nova rodovia na região de Sergipe.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/elementos-urbanos-01.jpg" alt="Extração de elementos urbanos — comparação entre imagem aérea e vetorização CAD" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Extração de elementos urbanos — quadras, vias e edificações detalhadas.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/elementos-rurais-02.jpg" alt="Extração de elementos rurais — comparação entre imagem aérea e vetorização CAD" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Extração de elementos rurais — glebas, acessos e construções rurais.</p>
+        </div>
+      </div>
+
+      <!-- TRECHOS RODOVIÁRIOS -->
+      <div class="reveal mt-20 mb-10 max-w-xl">
+        <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Trechos entregues</p>
+        <h3 class="font-display text-2xl sm:text-3xl font-semibold text-white tracking-[-0.02em] mb-4">Vetorização de trechos rodoviários</h3>
+        <p class="text-slate-400 leading-[1.7]">Amostras reais de diferentes trechos vetorizados, cobrindo desde faixa de domínio até edificações, postes, cercas e infraestrutura urbana ao longo da via.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/trecho1-galpao-industrial.jpg" alt="Vetorização de galpões e edificações próximos à rodovia" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Galpões e edificações próximos à rodovia — contornos detalhados em polilinhas por módulo construtivo.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/trecho1-rodovia-residencial.jpg" alt="Vetorização de rodovia em trecho residencial" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Eixo de rodovia e edificações residenciais — bordo de via e elementos adjacentes mapeados.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/trecho2-faixa-dominio-curva.jpg" alt="Vetorização respeitando faixa de domínio de 30 metros da BR" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Faixa de domínio de 30 m da BR — eixo da via, postes e elementos de apoio georreferenciados.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/trecho2-galpao-rural.jpg" alt="Vetorização de galpão e acesso rural junto à faixa de domínio" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Acesso rural e galpão dentro da faixa de domínio — detalhamento de contornos e divisas.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/trecho3-industrias-comercio.jpg" alt="Vetorização de estrada próxima a indústrias e comércios" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Estrada próxima a indústrias e comércios — galpões, acessos e cobertura comercial detalhados.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/trecho6-edificacoes-urbanas.jpg" alt="Vetorização de BR no meio de área urbana com edificações em faixa de 100 metros" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">BR em perímetro urbano — todas as edificações vetorizadas em faixa de 100 m para cada lado da via.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/treco4-acesso-edificacoes.jpg" alt="Vetorização de acesso de rodovia com edificações e rede de energia" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Acesso de rodovia — edificações, postes e rede de energia detalhados ao longo da via.</p>
+        </div>
+        <div class="reveal">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow">
+            <img src="assets/portfolio/treco5-cruzamento-postes.jpg" alt="Vetorização de cruzamento com muros, edificações, postes e cercas" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300">Cruzamento de vias — muros, edificações, postes, cercas, acostamento e bordo da BR mapeados.</p>
+        </div>
+        <div class="reveal lg:col-span-2">
+          <div class="rounded-xl overflow-hidden border border-white/5 card-shadow max-w-2xl mx-auto">
+            <img src="assets/portfolio/treco7-divisas-rurais.jpg" alt="Vetorização de rodovia com postes, edificações, bueiros e quadras" class="w-full">
+          </div>
+          <p class="mt-4 text-sm text-slate-300 text-center">Levantamento ao longo da rodovia — linhas de postes, edificações, bueiros, quadras e acessos.</p>
+        </div>
+      </div>
+
+      <div class="reveal mt-10 rounded-xl overflow-hidden border border-white/5 card-shadow">
+        <img src="assets/portfolio/total-area-vetorizada.jpg" alt="Visão geral de um trecho completo de rodovia vetorizado, do início ao fim" class="w-full max-h-[640px] object-contain bg-ink-900">
+        <div class="bg-ink-800 px-5 py-3 text-sm text-slate-300">Visão geral de um trecho completo — vetorização do início ao fim do percurso, com tabela de camadas aplicada.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PADRONIZAÇÃO DE CAMADAS -->
+  <section class="py-24 px-6 border-t border-white/5 bg-ink-900/40">
+    <div class="max-w-6xl mx-auto">
+      <div class="reveal mb-12 max-w-2xl">
+        <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Padronização técnica</p>
+        <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em] mb-4">Camadas no padrão ABNT</h2>
+        <p class="text-slate-400 leading-[1.7]">Todas as vetorizações seguem uma estrutura de camadas (layers) padronizada conforme as normas técnicas da ABNT para representação topográfica, garantindo que qualquer equipe de engenharia consiga abrir o arquivo e reconhecer imediatamente cada elemento.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">DP — Detalhes planimétricos</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Edificações, alta-tensão, antenas, reservatórios, parques</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">DI — Divisas</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Cercas de arame, tela, viva e mista, muros, tapumes</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">SV — Sistema viário</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Eixo de via, bordo, acostamento, calçada, meio-fio, ciclovia</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">IU — Infraestrutura urbana</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Bueiros, galerias, poços de visita, adutoras, fibra ótica</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">EU — Equipamentos urbanos</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Postes, luminárias, hidrantes, torres, estações de energia</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">HD / HG / HM — Hidrografia e relevo</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Cursos d'água, curvas de nível, cotas, marcos topográficos</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">ED — Edificações</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Alvenaria, madeira, mista, ruínas — por tipo construtivo</p>
+        </div>
+        <div class="reveal bg-ink-800 border border-white/5 rounded-lg p-4">
+          <p class="text-steel-400 font-display font-semibold text-sm mb-1">VE / OA / SI — Vegetação, obras e sinalização</p>
+          <p class="text-slate-300 text-xs leading-relaxed">Árvores, culturas, pontes, viadutos, placas e sinalização</p>
+        </div>
+      </div>
+
+      <div class="reveal rounded-xl overflow-hidden border border-white/5 card-shadow max-w-3xl">
+        <img src="assets/portfolio/layers-screenshot.jpg" alt="Tabela de layers organizadas por classe do projeto, seguindo nomenclatura técnica padronizada" class="w-full">
+        <div class="bg-ink-800 px-5 py-3 text-sm text-slate-300">233 camadas organizadas por categoria técnica — nomenclatura padronizada por classe (ex: TC-SV_BORDO, TC-EU_POSTE), facilitando a leitura por qualquer equipe.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIFERENCIAIS -->
+  <section class="py-24 px-6 border-t border-white/5 bg-ink-900/40">
+    <div class="max-w-6xl mx-auto">
+      <div class="reveal mb-12 max-w-xl">
+        <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Por que trabalhar comigo</p>
+        <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em]">Diferenciais</h2>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="reveal flex items-start gap-3 bg-ink-800/60 border border-white/5 rounded-lg p-5">
+          <span class="text-amber-500 mt-0.5">●</span>
+          <span class="text-slate-300 text-sm leading-[1.6]">Trabalho 100% remoto</span>
+        </div>
+        <div class="reveal flex items-start gap-3 bg-ink-800/60 border border-white/5 rounded-lg p-5">
+          <span class="text-amber-500 mt-0.5">●</span>
+          <span class="text-slate-300 text-sm leading-[1.6]">Desenvolvimento em AutoCAD Civil 3D</span>
+        </div>
+        <div class="reveal flex items-start gap-3 bg-ink-800/60 border border-white/5 rounded-lg p-5">
+          <span class="text-amber-500 mt-0.5">●</span>
+          <span class="text-slate-300 text-sm leading-[1.6]">Arquivos organizados e padronizados</span>
+        </div>
+        <div class="reveal flex items-start gap-3 bg-ink-800/60 border border-white/5 rounded-lg p-5">
+          <span class="text-amber-500 mt-0.5">●</span>
+          <span class="text-slate-300 text-sm leading-[1.6]">Agilidade nos prazos de entrega</span>
+        </div>
+        <div class="reveal flex items-start gap-3 bg-ink-800/60 border border-white/5 rounded-lg p-5">
+          <span class="text-amber-500 mt-0.5">●</span>
+          <span class="text-slate-300 text-sm leading-[1.6]">Compatibilidade com projetos topográficos e rodoviários</span>
+        </div>
+        <div class="reveal flex items-start gap-3 bg-ink-800/60 border border-white/5 rounded-lg p-5">
+          <span class="text-amber-500 mt-0.5">●</span>
+          <span class="text-slate-300 text-sm leading-[1.6]">Facilidade de comunicação e acompanhamento das demandas</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESSO -->
+  <section id="processo" class="py-24 px-6 border-t border-white/5">
+    <div class="max-w-4xl mx-auto">
+      <div class="reveal mb-16 max-w-xl">
+        <p class="text-amber-500 font-semibold text-sm tracking-[0.15em] uppercase mb-3">Como funciona</p>
+        <h2 class="font-display text-3xl font-semibold text-white tracking-[-0.02em]">Processo de entrega</h2>
+      </div>
+      <div class="relative">
+        <div class="absolute left-5 top-2 bottom-2 w-px step-line hidden sm:block"></div>
+        <div class="space-y-10">
+          <div class="reveal relative flex gap-6 items-start">
+            <div class="relative z-10 w-10 h-10 rounded-full bg-amber-500 text-ink-950 font-display font-semibold flex items-center justify-center shrink-0">1</div>
+            <div>
+              <h3 class="font-display text-white font-semibold text-lg mb-1">Desenvolvimento em AutoCAD Civil 3D</h3>
+              <p class="text-slate-400 leading-[1.7]">Vetorização técnica do ortomosaico conforme escopo do projeto.</p>
+            </div>
+          </div>
+          <div class="reveal relative flex gap-6 items-start">
+            <div class="relative z-10 w-10 h-10 rounded-full bg-amber-500 text-ink-950 font-display font-semibold flex items-center justify-center shrink-0">2</div>
+            <div>
+              <h3 class="font-display text-white font-semibold text-lg mb-1">Organização conforme padrão da contratante</h3>
+              <p class="text-slate-400 leading-[1.7]">Estruturação de layers e nomenclatura alinhadas ao padrão exigido.</p>
+            </div>
+          </div>
+          <div class="reveal relative flex gap-6 items-start">
+            <div class="relative z-10 w-10 h-10 rounded-full bg-amber-500 text-ink-950 font-display font-semibold flex items-center justify-center shrink-0">3</div>
+            <div>
+              <h3 class="font-display text-white font-semibold text-lg mb-1">Compactação e envio em nuvem</h3>
+              <p class="text-slate-400 leading-[1.7]">Entrega rápida e segura dos arquivos finais, prontos para uso.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal mt-16 grid sm:grid-cols-3 gap-5">
+        <div class="bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow">
+          <p class="text-amber-500 font-display font-semibold text-2xl mb-1">3–7 dias</p>
+          <p class="text-slate-400 text-sm">Pequenas demandas</p>
+        </div>
+        <div class="bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow">
+          <p class="text-amber-500 font-display font-semibold text-2xl mb-1">Sob análise</p>
+          <p class="text-slate-400 text-sm">Projetos médios</p>
+        </div>
+        <div class="bg-ink-800 border border-white/5 rounded-xl p-6 card-shadow">
+          <p class="text-amber-500 font-display font-semibold text-2xl mb-1">Cronograma</p>
+          <p class="text-slate-400 text-sm">Grandes áreas</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTATO -->
+  <section id="contato" class="relative py-28 px-6 border-t border-white/5 overflow-hidden">
+    <div class="absolute inset-0 glow-radial"></div>
+    <div class="grain"></div>
+    <div class="max-w-3xl mx-auto text-center relative reveal">
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold text-white tracking-[-0.02em] mb-5">Pronto para agilizar seu próximo projeto?</h2>
+      <p class="text-slate-400 leading-[1.7] mb-10 max-w-xl mx-auto">Fale diretamente comigo e receba um orçamento rápido para sua demanda de vetorização.</p>
+      <div class="flex flex-wrap justify-center gap-4 mb-10">
+        <a href="https://wa.me/55991226944" target="_blank" rel="noopener" class="btn-primary inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-ink-950 font-semibold px-7 py-3.5 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-2">
+          WhatsApp: (55) 99122-6944
+        </a>
+        <a href="mailto:leonanmoura6@gmail.com" class="btn-primary inline-flex items-center gap-2 bg-ink-800 hover:bg-ink-700 text-white font-medium px-7 py-3.5 rounded-lg border border-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-steel-400 focus-visible:outline-offset-2">
+          leonanmoura6@gmail.com
+        </a>
+      </div>
+      <p class="text-slate-500 text-sm">Instagram / LinkedIn: <span class="text-steel-400">@leonanm0ura</span></p>
+    </div>
+  </section>
+
+  <footer class="py-8 px-6 border-t border-white/5 text-center text-slate-500 text-sm">
+    © 2026 Leonan Moura — Vetorização técnica em AutoCAD Civil 3D.
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Before/after slider
+    function initBASlider(container) {
+      const before = container.dataset.before;
+      const after = container.dataset.after;
+      const beforeLabel = container.dataset.beforeLabel || 'Antes';
+      const afterLabel = container.dataset.afterLabel || 'Depois';
+
+      container.classList.add('ba-slider-wrap');
+      container.innerHTML = `
+        <img src="${before}" alt="" draggable="false">
+        <div class="ba-after" style="width:50%">
+          <img src="${after}" alt="" draggable="false" style="position:absolute;top:0;right:0;max-width:none;height:100%;">
+        </div>
+        <span class="ba-label" style="left:12px;top:12px;">${beforeLabel}</span>
+        <span class="ba-label" style="right:12px;top:12px;">${afterLabel}</span>
+        <div class="ba-handle" style="left:50%;">
+          <div class="ba-handle-grip">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0e14" stroke-width="2"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>`;
+
+      const afterEl = container.querySelector('.ba-after');
+      const handle = container.querySelector('.ba-handle');
+      const afterImg = afterEl.querySelector('img');
+
+      function sync() {
+        const w = container.clientWidth;
+        afterImg.style.width = w + 'px';
+        afterImg.style.height = container.clientHeight + 'px';
+      }
+
+      function setPos(pct) {
+        pct = Math.max(0, Math.min(100, pct));
+        afterEl.style.width = pct + '%';
+        handle.style.left = pct + '%';
+      }
+
+      function handleMove(clientX) {
+        const rect = container.getBoundingClientRect();
+        const pct = ((clientX - rect.left) / rect.width) * 100;
+        setPos(pct);
+      }
+
+      let dragging = false;
+      container.addEventListener('pointerdown', (e) => { dragging = true; handleMove(e.clientX); });
+      window.addEventListener('pointermove', (e) => { if (dragging) handleMove(e.clientX); });
+      window.addEventListener('pointerup', () => dragging = false);
+
+      window.addEventListener('resize', sync);
+      const ro = new ResizeObserver(sync);
+      ro.observe(container);
+
+      const baseImg = container.querySelector('img');
+      if (baseImg.complete) sync(); else baseImg.addEventListener('load', sync);
+    }
+
+    document.querySelectorAll('.ba-slider').forEach(initBASlider);
+  </script>
+</body>
+</html>
