@@ -114,7 +114,7 @@
     /* Hero: shrink so heading, copy and image fit together on the first page instead of spilling the image to page 2 */
     section#top { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
     section#top .grid { gap: 1.5rem !important; }
-    section#top img { max-height: 60vh; object-fit: cover; }
+    section#top img { max-height: 60vh; object-fit: contain; background: #fff; }
 
     /* Every yellow eyebrow label marks the start of a new section — always begin a fresh page there */
     .print-section-break { break-before: page; }
@@ -190,9 +190,8 @@
           </div>
         </div>
         <div class="reveal relative">
-          <div class="rounded-2xl overflow-hidden card-shadow border border-white/5 relative">
-            <img src="assets/portfolio/hero-novo-photo.jpg" alt="Imagem aérea de cruzamento de rodovias antes da vetorização" class="w-full">
-            <div class="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-transparent to-transparent mix-blend-multiply"></div>
+          <div class="rounded-2xl overflow-hidden card-shadow border border-white/5 relative bg-white">
+            <img src="assets/portfolio/total-desenho-horizontal.jpg" alt="Visão geral horizontal de todo o trecho rodoviário vetorizado, do início ao fim do levantamento" class="w-full">
           </div>
         </div>
       </div>
